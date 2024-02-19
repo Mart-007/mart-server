@@ -1,0 +1,25 @@
+# directories
+node_modules/
+dist/
+build/
+api-build/
+coverage/
+logs/
+
+# secrets
+*.env
+serviceAccount.json
+development.env
+staging.env
+
+# logs
+*-error.log
+*-debug.log
+
+# misc
+.eslintcache
+.DS_STORE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.pem

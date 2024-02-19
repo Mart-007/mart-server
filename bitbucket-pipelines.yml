@@ -1,0 +1,89 @@
+# This is a sample build configuration for Other.
+# Check our guides at https://confluence.atlassian.com/x/5Q4SMw for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: atlassian/default-image:2
+
+pipelines:
+  custom:
+    beta-deploy:
+      - step:
+          name: BETA DEPLOYMENT
+          deployment: Beta
+          script:
+            - if [ -z "$BITBUCKET_BRANCH" ]; then BITBUCKET_BRANCH=$(hg branch); fi
+            - ssh ctodev@beta.ctoglobal.co "sh /opt/integrations/docker_deploy.sh custom-http-triggers $BITBUCKET_BRANCH 7001"
+
+  pull-requests:
+    '**': #this runs as default for any branch not elsewhere defined
+      - step:
+          name: Lint and unit test
+          image: node:16.15.0
+          caches:
+            - node
+          script:
+            - yarn install --immutable --immutable-cache --ignore-scripts
+            # ignore lint for serviceAccount.json import/resolved
+            - touch ./src/config/serviceAccount.json
+            - |
+              yarn concurrently -g \
+              "yarn lint" \
+              "yarn check:types" \
+              "yarn test --maxWorkers=4 --no-color --coverage=false --changedSince=origin/master" \
+              "yarn cspell ./ --no-progress --no-must-find-files"
+  branches:
+    master:
+      - step:
+          name: Deploy to Staging
+          image: node:16.15.0
+          deployment: Staging
+          caches:
+            - node
+          script:
+            - yarn install --immutable --immutable-cache --ignore-scripts
+            # ignore lint for serviceAccount.json import/resolved
+            - touch ./src/config/serviceAccount.json
+            - |
+              yarn concurrently -g \
+              "yarn lint" \
+              "yarn check:types" \
+              "yarn test --maxWorkers=4 --no-color --coverage=false"
+            - ssh root@209.97.168.234 "sh /root/deployments/docker_deploy.sh custom-http-triggers staging master 5011"
+
+    develop:
+      - step:
+          name: Deploy to Beta
+          image: node:16.15.0
+          deployment: Beta
+          caches:
+            - node
+          script:
+            - yarn install --immutable --immutable-cache --ignore-scripts
+            # ignore lint for serviceAccount.json import/resolved
+            - touch ./src/config/serviceAccount.json
+            - |
+              yarn concurrently -g \
+              "yarn lint" \
+              "yarn check:types" \
+              "yarn test --maxWorkers=4 --no-color --coverage=false --changedSince=origin/develop"
+            - ssh ctodev@beta.ctoglobal.co "sh /opt/integrations/docker_deploy.sh custom-http-triggers develop 7001"
+
+  tags:
+    '*':
+      - step:
+          name: Deploy to Production
+          image: node:16.15.0
+          deployment: Production
+          caches:
+            - node
+          script:
+            - yarn install --immutable --immutable-cache --ignore-scripts
+            # ignore lint for serviceAccount.json import/resolved
+            - touch ./src/config/serviceAccount.json
+            - |
+              yarn concurrently -g \
+              "yarn lint" \
+              "yarn check:types" \
+              "yarn test --maxWorkers=4 --no-color --coverage=false"
+            - ssh root@209.97.168.234 "sh /root/deployments/docker_deploy.sh custom-http-triggers production $BITBUCKET_TAG 5010"
