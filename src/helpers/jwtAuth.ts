@@ -4,17 +4,17 @@ import { sign } from 'jsonwebtoken'
 
 class JwtAuth {
   private JWT_SECRET_KEY: string
-  private LMI_AUTH_KEY: string
+  private MART_AUTH_KEY: string
 
   constructor() {
     this.JWT_SECRET_KEY = CONFIG.JWT_SECRET_KEY
-    this.LMI_AUTH_KEY = CONFIG.LMI_AUTH_KEY
+    this.MART_AUTH_KEY = CONFIG.MART_AUTH_KEY
   }
 
   public generateJwtToken = (data, tempExpiresIn?: string | number): string => {
     const expiresIn = tempExpiresIn || 1200
 
-    return sign({ ...data, lmiAuthKey: this.LMI_AUTH_KEY }, this.JWT_SECRET_KEY, { expiresIn })
+    return sign({ ...data, martAuthKey: this.MART_AUTH_KEY }, this.JWT_SECRET_KEY, { expiresIn })
   }
 }
 
