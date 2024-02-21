@@ -23,7 +23,6 @@
   "author": "LMI",
   "license": "ISC",
   "dependencies": {
-    "@lalamove/lalamove-js": "^1.1.0",
     "axios": "^0.19.1",
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
